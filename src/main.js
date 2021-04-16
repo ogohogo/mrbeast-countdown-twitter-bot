@@ -10,7 +10,7 @@ const calculatePercentage = require("./utils/percentage")
 const hourDifference = require("./utils/hourDifference")
 
 
-//Sloppy coding, cool be coded better than this
+//Sloppy coding, could be coded better than this
 var milestones = [
     10000000,
     20000000,
