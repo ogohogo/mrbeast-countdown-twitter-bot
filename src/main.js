@@ -8,6 +8,7 @@ const tweet = require("./utils/tweet");
 const abbreviateNumber = require("./utils/abbreviateNumber")
 const calculatePercentage = require("./utils/percentage")
 const hourDifference = require("./utils/hourDifference")
+const convertFrom24To12Format = require("./utils/convertTime")
 
 
 //Sloppy coding, cool be coded better than this
@@ -41,11 +42,26 @@ async function getData() {
     //Calculate % remaining
     let subCountPercentage = 100 - calculatePercentage(subCount, 100_000_000)
 
-    let status = `MrBeast just hit ${abbreviateNumber(subCount)} subscribers on YouTube! It took him around ${hourDifference(localDB.milestoneTimestamp)} hours to hit it.\n\n${subCountPercentage}% remains to 100M.`
+    let date = new Date();
+
+    let day = date.getDate();
+    let month = date.toLocaleString('default', { month: 'long' })
+    let year = date.getFullYear();
+
+    let hour = date.getHours();
+    let minute = date.getMinutes();
+
+    let timeAMPM = convertFrom24To12Format(`${hour}:${minute}`)
+
+    let formattedDate = `${day} ${month} ${year} at ${timeAMPM} CET`
+
+    var status;
 
     //Tweet MrBeast if milestone is reached (sloppy way of checking it but oh well, it has to do it for now)
-    if (milestones.includes(subCount)) await tweet('.@' + status)
-    else await tweet(status)
+    if (milestones.includes(subCount)) status = `On ${formattedDate} @MrBeast hit ${abbreviateNumber(subCount)} subscribers on YouTube! Congratulations!\n\n${subCountPercentage}% remains to 100M.`
+    else status = `MrBeast just hit ${abbreviateNumber(subCount)} subscribers on YouTube! It took him around ${hourDifference(localDB.milestoneTimestamp)} hours to hit it.\n\n${subCountPercentage}% remains to 100M.`
+
+    await tweet(status)
     
     //Make changes to Local Database
     localDB.subscriberCount = subCount;
