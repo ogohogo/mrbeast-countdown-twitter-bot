@@ -28,10 +28,15 @@ var milestones = [
 async function getData() {
 
     //Fetch data about MrBeast from YouTube's API
-    const data = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics&id=UCX6OQ3DkcsbYNE6H8uQQuVA&key=${config.yt_api_key}`).then(res => res.json());
+    const data = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics&id=UCX6OQ3DkcsbYNE6H8uQQuVA&key=${config.yt_api_key}`, {
+        timeout: 2000
+    }).then(res => res.json());
 
     //We want it to be integer and not string
     let subCount = parseInt(data.items[0].statistics.subscriberCount);
+
+    //Don't do anything if sub count in local file is higher than one in API. This is to prevent situations like that: https://i.imgur.com/hodgAab.png
+    if (subCount < localDB.subscriberCount) return;
 
     //Don't do anything if sub count is the same
     if (subCount == localDB.subscriberCount) return;
@@ -40,7 +45,7 @@ async function getData() {
     let currentTimeInMS = new Date().getTime()
 
     //Calculate % remaining
-    let subCountPercentage = 100 - calculatePercentage(subCount, 100_000_000)
+    let subCountPercentage = (100 - calculatePercentage(subCount, 100_000_000)).toFixed(1)
 
     let date = new Date();
 
@@ -59,7 +64,7 @@ async function getData() {
 
     //Tweet MrBeast if milestone is reached (sloppy way of checking it but oh well, it has to do it for now)
     if (milestones.includes(subCount)) status = `On ${formattedDate} @MrBeast hit ${abbreviateNumber(subCount)} subscribers on YouTube! Congratulations!\n\n${subCountPercentage}% remains to 100M.`
-    else status = `MrBeast just hit ${abbreviateNumber(subCount)} subscribers on YouTube! It took him around ${hourDifference(localDB.milestoneTimestamp)} hours to hit it.\n\n${subCountPercentage}% remains to 100M.`
+    else status = `MrBeast just hit ${abbreviateNumber(subCount)} subscribers on YouTube! It took him around ${hourDifference(localDB.milestoneTimestamp)} to hit it.\n\n${subCountPercentage}% remains to 100M.`
 
     await tweet(status)
     
@@ -72,7 +77,7 @@ async function getData() {
 
 }
 
-//Do the same task every 1 minute (INCREASE IT IF YOU'RE RUNNING OUT OF YOUTUBE QUOTA!!!)
+//Do the same task every 1 second (INCREASE IT IF YOU'RE RUNNING OUT OF YOUTUBE QUOTA!!!)
 setInterval(() => {
     getData();
-}, 1 * 60 * 1000)
+}, 1 * 1000)
